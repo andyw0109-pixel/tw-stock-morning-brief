@@ -84,10 +84,10 @@
 
   .lead {
     font-family: 'Noto Serif TC', serif;
-    font-size: 1.08rem;
-    line-height: 1.9;
+    font-size: 1.02rem;
+    line-height: 1.95;
     color: var(--text-primary);
-    padding: 22px 24px;
+    padding: 26px 28px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-left: 3px solid var(--accent-dawn);
@@ -102,6 +102,86 @@
     color: var(--accent-dawn);
     margin-bottom: 10px;
     font-weight: 600;
+  }
+
+  /* 摘要內文的結構化排版 */
+  .brief-h {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent-dawn);
+    margin: 30px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-strong);
+    letter-spacing: 0.02em;
+  }
+
+  .brief-h:first-child { margin-top: 0; }
+
+  .brief-p {
+    margin: 0 0 14px;
+  }
+
+  .brief-p:last-child { margin-bottom: 0; }
+
+  .brief-sub {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: var(--text-primary);
+    margin: 22px 0 10px;
+  }
+
+  .brief-ul {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+
+  .brief-ul li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    line-height: 1.85;
+  }
+
+  .brief-ul li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0.82em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-dawn);
+    opacity: 0.75;
+  }
+
+  .brief-ul li.lvl2 {
+    padding-left: 36px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .brief-ul li.lvl2::before {
+    left: 22px;
+    width: 4px;
+    height: 4px;
+    border-radius: 0;
+    background: var(--text-tertiary);
+  }
+
+  .brief-ul li strong,
+  .brief-p strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .brief-hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
   }
 
   /* ---------- Market grid ---------- */
@@ -425,6 +505,77 @@
     try { return JSON.parse(str); } catch (e) { return fallback; }
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // 將 Gemini 回傳的 Markdown 風格文字轉成結構化 HTML
+  function renderBrief(raw) {
+    if (!raw) return '<p class="brief-p">今日摘要尚未生成。</p>';
+
+    var lines = String(raw).replace(/\r/g, '').split('\n');
+    var html = '';
+    var listOpen = false;
+
+    function closeList() {
+      if (listOpen) { html += '</ul>'; listOpen = false; }
+    }
+
+    function inline(t) {
+      // 先跳脫 HTML，再處理粗體
+      return escapeHtml(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var trimmed = line.trim();
+
+      if (trimmed === '') continue;
+
+      // 分隔線
+      if (/^-{3,}$/.test(trimmed) || /^\*{3,}$/.test(trimmed)) {
+        closeList();
+        html += '<hr class="brief-hr">';
+        continue;
+      }
+
+      // 📌 大標題
+      if (trimmed.indexOf('📌') === 0) {
+        closeList();
+        html += '<div class="brief-h">' + inline(trimmed.replace(/\*\*/g, '')) + '</div>';
+        continue;
+      }
+
+      // **1. 小節標題** （整行都是粗體）
+      var boldOnly = trimmed.match(/^\*\*(.+?)\*\*[：:]?$/);
+      if (boldOnly) {
+        closeList();
+        html += '<div class="brief-sub">' + escapeHtml(boldOnly[1]) + '</div>';
+        continue;
+      }
+
+      // 條列項目（含縮排判斷第二層）
+      var bullet = line.match(/^(\s*)[*\-•]\s+(.*)$/);
+      if (bullet) {
+        var indent = bullet[1].length;
+        var content = bullet[2];
+        if (!listOpen) { html += '<ul class="brief-ul">'; listOpen = true; }
+        html += '<li' + (indent >= 4 ? ' class="lvl2"' : '') + '>' + inline(content) + '</li>';
+        continue;
+      }
+
+      // 一般段落
+      closeList();
+      html += '<p class="brief-p">' + inline(trimmed) + '</p>';
+    }
+
+    closeList();
+    return html;
+  }
+
   function renderInstitutional(byType) {
     var labels = {
       Foreign_Investor: '外資',
@@ -502,7 +653,7 @@
     var summary = row[8];
 
     els.dateLabel.textContent = taiexDate ? (taiexDate + ' 收盤') : '';
-    els.summaryText.textContent = summary || '今日摘要尚未生成。';
+    els.summaryText.innerHTML = renderBrief(summary);
 
     els.taiexValue.textContent = fmtNum(taiexClose);
     var cls = changeClass(taiexChange);
