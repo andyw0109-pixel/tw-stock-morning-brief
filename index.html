@@ -542,18 +542,25 @@
         continue;
       }
 
-      // 📌 大標題
-      if (trimmed.indexOf('📌') === 0) {
+      // 大標題：📌 開頭，或整行是【...】格式（可能前後有 ** 或 📌）
+      var headingCandidate = trimmed.replace(/\*\*/g, '').replace(/^📌\s*/, '').trim();
+      if (trimmed.indexOf('📌') === 0 || /^【.+】[：:]?$/.test(headingCandidate)) {
         closeList();
-        html += '<div class="brief-h">' + inline(trimmed.replace(/\*\*/g, '')) + '</div>';
+        html += '<div class="brief-h">📌 ' + escapeHtml(headingCandidate) + '</div>';
         continue;
       }
 
-      // **1. 小節標題** （整行都是粗體）
+      // 小節標題：**1. 標題** 或 (1) 標題 或 1. 標題（整行且不長）
       var boldOnly = trimmed.match(/^\*\*(.+?)\*\*[：:]?$/);
       if (boldOnly) {
         closeList();
         html += '<div class="brief-sub">' + escapeHtml(boldOnly[1]) + '</div>';
+        continue;
+      }
+      var numbered = headingCandidate.match(/^(?:\(\d+\)|\d+[.、])\s*(.{2,30})$/);
+      if (numbered && !/[。！？]$/.test(headingCandidate)) {
+        closeList();
+        html += '<div class="brief-sub">' + escapeHtml(headingCandidate) + '</div>';
         continue;
       }
 
