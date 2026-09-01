@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台股晨報</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12141c;
+    --bg-elevated: #1b1f2c;
+    --bg-elevated-2: #232838;
+    --text-primary: #f3f1ea;
+    --text-secondary: #9098ac;
+    --text-tertiary: #656c80;
+    --accent-dawn: #e8a33d;
+    --accent-dawn-soft: rgba(232, 163, 61, 0.14);
+    --up-red: #e5484d;
+    --up-red-soft: rgba(229, 72, 77, 0.12);
+    --down-green: #35b171;
+    --down-green-soft: rgba(53, 177, 113, 0.12);
+    --border: rgba(243, 241, 234, 0.08);
+    --border-strong: rgba(243, 241, 234, 0.16);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(232, 163, 61, 0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(94, 110, 168, 0.10), transparent 55%);
+    background-repeat: no-repeat;
+    color: var(--text-primary);
+    font-family: 'Noto Sans TC', -apple-system, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+  }
+
+  /* ---------- Masthead ---------- */
+
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-strong);
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .masthead h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin: 0;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, var(--text-primary) 40%, var(--accent-dawn) 130%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .masthead .date {
+    font-family: 'Noto Sans TC', sans-serif;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  /* ---------- Lead summary ---------- */
+
+  .lead {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.08rem;
+    line-height: 1.9;
+    color: var(--text-primary);
+    padding: 22px 24px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-dawn);
+    border-radius: 4px;
+    margin-bottom: 32px;
+  }
+
+  .lead .lead-label {
+    display: block;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.78rem;
+    color: var(--accent-dawn);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  /* ---------- Market grid ---------- */
+
+  .markets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 640px) {
+    .markets { grid-template-columns: 1fr; }
+  }
+
+  .market-panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 22px;
+  }
+
+  .market-panel h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 18px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .market-panel h2::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-dawn);
+    flex-shrink: 0;
+  }
+
+  .index-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .index-row:first-of-type { border-top: none; padding-top: 0; }
+
+  .index-name {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+  }
+
+  .index-figures {
+    text-align: right;
+  }
+
+  .index-value {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .index-change {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.82rem;
+    margin-left: 8px;
+  }
+
+  .up { color: var(--up-red); }
+  .down { color: var(--down-green); }
+  .flat { color: var(--text-tertiary); }
+
+  .index-change.up::before { content: '▲ '; }
+  .index-change.down::before { content: '▼ '; }
+
+  /* ---------- Institutional table ---------- */
+
+  .inst-list {
+    margin-top: 4px;
+  }
+
+  .inst-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .inst-row:first-child { border-top: none; }
+
+  .inst-name { color: var(--text-secondary); }
+
+  .inst-value {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  /* ---------- News ---------- */
+
+  .news-section h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .news-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .news-item {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .news-item:last-child { border-bottom: none; }
+
+  .news-item a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 4px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.94rem;
+    transition: color 0.15s ease;
+  }
+
+  .news-item a:hover { color: var(--accent-dawn); }
+  .news-item a:focus-visible {
+    outline: 2px solid var(--accent-dawn);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .news-item .arrow {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ---------- Footer ---------- */
+
+  .footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-tertiary);
+    font-size: 0.78rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .footer a { color: var(--text-tertiary); }
+
+  /* ---------- States: loading / error / empty ---------- */
+
+  .state-panel {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-secondary);
+  }
+
+  .state-panel .state-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+
+  .state-panel .state-detail {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    max-width: 420px;
+    margin: 8px auto 0;
+  }
+
+  .spinner {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border-strong);
+    border-top-color: var(--accent-dawn);
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="masthead">
+    <h1>台股晨報</h1>
+    <span class="date" id="dateLabel"></span>
+  </header>
+
+  <div id="loadingState" class="state-panel">
+    <div class="spinner"></div>
+    <div class="state-title">正在整理今日晨報</div>
+  </div>
+
+  <div id="errorState" class="state-panel" hidden>
+    <div class="state-title">晨報暫時無法取得</div>
+    <div class="state-detail" id="errorDetail">資料來源連線失敗，可能是排程尚未執行，或 Sheet 尚未設定為公開。稍後重新整理即可。</div>
+  </div>
+
+  <main id="content" hidden>
+
+    <section class="lead">
+      <span class="lead-label">開盤前重點</span>
+      <div id="summaryText"></div>
+    </section>
+
+    <section class="markets">
+      <div class="market-panel">
+        <h2>台股</h2>
+        <div class="index-row">
+          <span class="index-name">加權指數</span>
+          <span class="index-figures">
+            <span class="index-value" id="taiexValue"></span>
+            <span class="index-change" id="taiexChange"></span>
+          </span>
+        </div>
+        <div class="inst-list" id="instList"></div>
+      </div>
+
+      <div class="market-panel">
+        <h2>美股</h2>
+        <div id="usIndicesList"></div>
+      </div>
+    </section>
+
+    <section class="news-section">
+      <h2>台股相關新聞</h2>
+      <ul class="news-list" id="newsList"></ul>
+    </section>
+
+    <footer class="footer">
+      <span id="updatedLabel"></span>
+      <span>資料來源：FinMind、Yahoo股市（依其使用條款標示出處）</span>
+    </footer>
+
+  </main>
+
+</div>
+
+<script>
+(function () {
+  // ===== 設定區 =====
+  var SHEET_ID = '1NzBY0XUUs2cDFJSNNXsO7EOgPvQsyjRXh4y7m2NWOGg';
+  var SHEET_NAME = '晨報資料';
+  // ==================
+
+  var GVIZ_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
+    '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(SHEET_NAME);
+
+  var els = {
+    loading: document.getElementById('loadingState'),
+    error: document.getElementById('errorState'),
+    errorDetail: document.getElementById('errorDetail'),
+    content: document.getElementById('content'),
+    dateLabel: document.getElementById('dateLabel'),
+    summaryText: document.getElementById('summaryText'),
+    taiexValue: document.getElementById('taiexValue'),
+    taiexChange: document.getElementById('taiexChange'),
+    instList: document.getElementById('instList'),
+    usIndicesList: document.getElementById('usIndicesList'),
+    newsList: document.getElementById('newsList'),
+    updatedLabel: document.getElementById('updatedLabel'),
+  };
+
+  function showError(message) {
+    els.loading.hidden = true;
+    els.content.hidden = true;
+    els.error.hidden = false;
+    if (message) els.errorDetail.textContent = message;
+  }
+
+  function fmtNum(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return Number(n).toLocaleString('zh-Hant-TW', { maximumFractionDigits: 2 });
+  }
+
+  function changeClass(n) {
+    if (n > 0) return 'up';
+    if (n < 0) return 'down';
+    return 'flat';
+  }
+
+  function fmtChange(change, pct) {
+    var sign = change > 0 ? '+' : '';
+    return sign + fmtNum(change) + '（' + sign + fmtNum(pct) + '%）';
+  }
+
+  function safeJsonParse(str, fallback) {
+    try { return JSON.parse(str); } catch (e) { return fallback; }
+  }
+
+  function renderInstitutional(byType) {
+    var labels = {
+      Foreign_Investor: '外資',
+      Investment_Trust: '投信',
+      Dealer: '自營商',
+      Dealer_self: '自營商(自行)',
+      Dealer_Hedging: '自營商(避險)',
+      Foreign_Dealer_Self: '外資自營商',
+      total: '合計',
+    };
+    var keys = Object.keys(byType || {});
+    if (keys.length === 0) {
+      els.instList.innerHTML = '<div class="inst-row"><span class="index-name">三大法人買賣超</span><span class="inst-value flat">今日尚無資料</span></div>';
+      return;
+    }
+    var html = '<div class="index-row" style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;"><span class="index-name">三大法人買賣超（億元）</span></div>';
+    // 合計放最後，其餘依原順序
+    keys.sort(function (a, b) {
+      if (a === 'total') return 1;
+      if (b === 'total') return -1;
+      return 0;
+    });
+    keys.forEach(function (k) {
+      var val = byType[k] / 100000000;
+      var label = labels[k] || k;
+      var rowStyle = k === 'total' ? ' style="border-top:1px solid var(--border-strong);margin-top:2px;font-weight:600;"' : '';
+      html += '<div class="inst-row"' + rowStyle + '><span class="inst-name">' + label + '</span>' +
+        '<span class="inst-value ' + changeClass(val) + '">' + (val >= 0 ? '+' : '') + val.toFixed(2) + '</span></div>';
+    });
+    els.instList.innerHTML = html;
+  }
+
+  function renderUsIndices(usIndices) {
+    var order = ['道瓊', 'S&P500', '那斯達克'];
+    var html = '';
+    order.forEach(function (name) {
+      var v = usIndices ? usIndices[name] : null;
+      if (!v || v.error) {
+        html += '<div class="index-row"><span class="index-name">' + name + '</span>' +
+          '<span class="index-figures flat">資料取得失敗</span></div>';
+        return;
+      }
+      var cls = changeClass(v.change);
+      html += '<div class="index-row"><span class="index-name">' + name + '</span>' +
+        '<span class="index-figures">' +
+        '<span class="index-value">' + fmtNum(v.close) + '</span>' +
+        '<span class="index-change ' + cls + '">' + (v.change >= 0 ? '+' : '') + fmtNum(v.change) + '（' + (v.changePercent >= 0 ? '+' : '') + fmtNum(v.changePercent) + '%）</span>' +
+        '</span></div>';
+    });
+    els.usIndicesList.innerHTML = html;
+  }
+
+  function renderNews(news) {
+    if (!news || news.length === 0) {
+      els.newsList.innerHTML = '<li class="news-item" style="padding:14px 4px;color:var(--text-tertiary);">今日暫無新聞資料</li>';
+      return;
+    }
+    var html = '';
+    news.forEach(function (item) {
+      html += '<li class="news-item"><a href="' + item.link + '" target="_blank" rel="noopener">' +
+        '<span>' + item.title + '</span><span class="arrow">›</span></a></li>';
+    });
+    els.newsList.innerHTML = html;
+  }
+
+  function render(row) {
+    var updatedAt = row[0];
+    var taiexDate = row[1];
+    var taiexClose = parseFloat(row[2]);
+    var taiexChange = parseFloat(row[3]);
+    var taiexPct = parseFloat(row[4]);
+    var instByType = safeJsonParse(row[5], {});
+    var usIndices = safeJsonParse(row[6], {});
+    var news = safeJsonParse(row[7], []);
+    var summary = row[8];
+
+    els.dateLabel.textContent = taiexDate ? (taiexDate + ' 收盤') : '';
+    els.summaryText.textContent = summary || '今日摘要尚未生成。';
+
+    els.taiexValue.textContent = fmtNum(taiexClose);
+    var cls = changeClass(taiexChange);
+    els.taiexChange.className = 'index-change ' + cls;
+    els.taiexChange.textContent = (taiexChange >= 0 ? '+' : '') + fmtNum(taiexChange) + '（' + (taiexPct >= 0 ? '+' : '') + fmtNum(taiexPct) + '%）';
+
+    renderInstitutional(instByType);
+    renderUsIndices(usIndices);
+    renderNews(news);
+
+    els.updatedLabel.textContent = '更新於 ' + (updatedAt || '—');
+
+    els.loading.hidden = true;
+    els.error.hidden = true;
+    els.content.hidden = false;
+  }
+
+  function parseGvizResponse(text) {
+    var match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/);
+    if (!match) throw new Error('無法解析資料格式');
+    return JSON.parse(match[1]);
+  }
+
+  fetch(GVIZ_URL)
+    .then(function (resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.text();
+    })
+    .then(function (text) {
+      var data = parseGvizResponse(text);
+      if (!data.table || !data.table.rows || data.table.rows.length === 0) {
+        showError('目前 Sheet 裡還沒有任何資料，排程可能尚未第一次執行。');
+        return;
+      }
+      var rows = data.table.rows;
+      var lastRow = rows[rows.length - 1];
+      // 欄位 0、1 是日期／時間型別，gviz 回傳的 v 是 Date(...) 特殊格式，改用已格式化好的 f
+      var values = lastRow.c.map(function (cell, i) {
+        if (!cell) return null;
+        if ((i === 0 || i === 1) && cell.f !== undefined) return cell.f;
+        return cell.v;
+      });
+      render(values);
+    })
+    .catch(function (err) {
+      showError('連線失敗：' + err.message + '。請確認 Google Sheet 是否已設定為「知道連結的使用者均可查看」。');
+    });
+})();
+</script>
+
+</body>
+</html>
