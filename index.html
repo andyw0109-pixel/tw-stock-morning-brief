@@ -667,7 +667,8 @@
     var intlNews = Array.isArray(newsRaw) ? [] : (newsRaw.intl || []);
     var summary = row[8];
 
-    els.dateLabel.textContent = taiexDate ? (taiexDate + ' 收盤') : '';
+    var briefDate = updatedAt ? updatedAt.slice(0, 10) : '';
+    els.dateLabel.textContent = briefDate ? (briefDate + ' 晨報') : '';
     els.summaryText.innerHTML = renderBrief(summary);
 
     els.taiexValue.textContent = fmtNum(taiexClose);
