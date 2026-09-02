@@ -444,6 +444,11 @@
       <ul class="news-list" id="newsList"></ul>
     </section>
 
+    <section class="news-section">
+      <h2>國際財經新聞</h2>
+      <ul class="news-list" id="intlNewsList"></ul>
+    </section>
+
     <footer class="footer">
       <span id="updatedLabel"></span>
       <span>資料來源：FinMind、Yahoo股市（依其使用條款標示出處）</span>
@@ -475,6 +480,7 @@
     instList: document.getElementById('instList'),
     usIndicesList: document.getElementById('usIndicesList'),
     newsList: document.getElementById('newsList'),
+    intlNewsList: document.getElementById('intlNewsList'),
     updatedLabel: document.getElementById('updatedLabel'),
   };
 
@@ -635,9 +641,9 @@
     els.usIndicesList.innerHTML = html;
   }
 
-  function renderNews(news) {
+  function renderNews(news, targetEl, emptyMsg) {
     if (!news || news.length === 0) {
-      els.newsList.innerHTML = '<li class="news-item" style="padding:14px 4px;color:var(--text-tertiary);">今日暫無新聞資料</li>';
+      targetEl.innerHTML = '<li class="news-item" style="padding:14px 4px;color:var(--text-tertiary);">' + emptyMsg + '</li>';
       return;
     }
     var html = '';
@@ -645,7 +651,7 @@
       html += '<li class="news-item"><a href="' + item.link + '" target="_blank" rel="noopener">' +
         '<span>' + item.title + '</span><span class="arrow">›</span></a></li>';
     });
-    els.newsList.innerHTML = html;
+    targetEl.innerHTML = html;
   }
 
   function render(row) {
@@ -656,7 +662,9 @@
     var taiexPct = parseFloat(row[4]);
     var instByType = safeJsonParse(row[5], {});
     var usIndices = safeJsonParse(row[6], {});
-    var news = safeJsonParse(row[7], []);
+    var newsRaw = safeJsonParse(row[7], {});
+    var news = Array.isArray(newsRaw) ? newsRaw : (newsRaw.tw || []);
+    var intlNews = Array.isArray(newsRaw) ? [] : (newsRaw.intl || []);
     var summary = row[8];
 
     els.dateLabel.textContent = taiexDate ? (taiexDate + ' 收盤') : '';
@@ -669,7 +677,8 @@
 
     renderInstitutional(instByType);
     renderUsIndices(usIndices);
-    renderNews(news);
+    renderNews(news, els.newsList, '今日暫無新聞資料');
+    renderNews(intlNews, els.intlNewsList, '今日暫無國際新聞資料');
 
     els.updatedLabel.textContent = '更新於 ' + (updatedAt || '—');
 
