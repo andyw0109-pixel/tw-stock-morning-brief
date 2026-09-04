@@ -465,8 +465,10 @@
   var SHEET_NAME = '晨報資料';
   // ==================
 
+  // 加上時間戳記參數，避免瀏覽器/CDN 快取住舊資料
   var GVIZ_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
-    '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(SHEET_NAME);
+    '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(SHEET_NAME) +
+    '&_ts=' + Date.now();
 
   var els = {
     loading: document.getElementById('loadingState'),
@@ -694,7 +696,7 @@
     return JSON.parse(match[1]);
   }
 
-  fetch(GVIZ_URL)
+  fetch(GVIZ_URL, { cache: 'no-store' })
     .then(function (resp) {
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       return resp.text();
